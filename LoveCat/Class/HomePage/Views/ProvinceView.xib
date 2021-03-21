@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="17701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17703"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB" customClass="ProvinceView" customModule="LoveCat" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="422" height="58"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fMX-2C-oc0">
+                    <rect key="frame" x="20" y="9" width="70" height="40"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="40" id="XCg-bv-2iw"/>
+                    </constraints>
+                    <state key="normal" title="province"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="92Z-EW-vg6">
+                    <rect key="frame" x="105" y="9" width="54" height="40"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="40" id="aYl-zE-UBE"/>
+                    </constraints>
+                    <state key="normal" title="Button"/>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="GU9-YG-6vt">
+                    <rect key="frame" x="175" y="9" width="54" height="40"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="40" id="krl-i0-AU1"/>
+                    </constraints>
+                    <state key="normal" title="Button"/>
+                </button>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ucb-R5-JlM">
+                    <rect key="frame" x="15" y="55" width="70" height="2"/>
+                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="2" id="O9m-uZ-Wvd"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="lhu-fP-Ert">
+                    <rect key="frame" x="0.0" y="57" width="422" height="1"/>
+                    <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="1" id="ihy-Gp-aUu"/>
+                    </constraints>
+                </view>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Bpz-hV-2g8">
+                    <rect key="frame" x="372" y="0.0" width="40" height="57"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="40" id="Akc-nE-TSv"/>
+                    </constraints>
+                    <state key="normal" image="icon_fish_close"/>
+                </button>
+            </subviews>
+            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+            <constraints>
+                <constraint firstItem="fMX-2C-oc0" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="20" id="0o0-o3-9JU"/>
+                <constraint firstAttribute="trailing" secondItem="Bpz-hV-2g8" secondAttribute="trailing" constant="10" id="4mX-Bg-xYb"/>
+                <constraint firstAttribute="bottom" secondItem="lhu-fP-Ert" secondAttribute="bottom" id="7oc-zL-mwm"/>
+                <constraint firstItem="92Z-EW-vg6" firstAttribute="leading" secondItem="fMX-2C-oc0" secondAttribute="trailing" constant="15" id="CEg-nO-CcU"/>
+                <constraint firstAttribute="trailing" secondItem="lhu-fP-Ert" secondAttribute="trailing" id="Ei6-hf-gK6"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="GU9-YG-6vt" secondAttribute="trailing" constant="15" id="I6h-59-4Ms"/>
+                <constraint firstItem="lhu-fP-Ert" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="Q5u-8O-PhY"/>
+                <constraint firstAttribute="bottom" secondItem="Ucb-R5-JlM" secondAttribute="bottom" constant="1" id="QWO-XC-6Vj"/>
+                <constraint firstItem="92Z-EW-vg6" firstAttribute="height" secondItem="fMX-2C-oc0" secondAttribute="height" id="TeD-Mh-EHS"/>
+                <constraint firstItem="92Z-EW-vg6" firstAttribute="centerY" secondItem="fMX-2C-oc0" secondAttribute="centerY" id="YaL-eb-MVs"/>
+                <constraint firstItem="fMX-2C-oc0" firstAttribute="centerY" secondItem="iN0-l3-epB" secondAttribute="centerY" id="YpU-X1-nvT"/>
+                <constraint firstItem="lhu-fP-Ert" firstAttribute="top" secondItem="Bpz-hV-2g8" secondAttribute="bottom" id="a4e-qz-QlJ"/>
+                <constraint firstItem="Bpz-hV-2g8" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="gDo-ne-Cj2"/>
+                <constraint firstItem="GU9-YG-6vt" firstAttribute="height" secondItem="fMX-2C-oc0" secondAttribute="height" id="hv9-tJ-bYs"/>
+                <constraint firstItem="Ucb-R5-JlM" firstAttribute="width" secondItem="fMX-2C-oc0" secondAttribute="width" id="kEq-Xu-EVg"/>
+                <constraint firstItem="GU9-YG-6vt" firstAttribute="leading" secondItem="92Z-EW-vg6" secondAttribute="trailing" constant="16" id="szx-ac-xRB"/>
+                <constraint firstItem="GU9-YG-6vt" firstAttribute="centerY" secondItem="fMX-2C-oc0" secondAttribute="centerY" id="w6K-26-ZSb"/>
+                <constraint firstItem="Ucb-R5-JlM" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="15" id="xi5-XC-8Sd"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <connections>
+                <outlet property="areaBtn" destination="GU9-YG-6vt" id="NLj-Hq-8BY"/>
+                <outlet property="bottomLine" destination="Ucb-R5-JlM" id="XGd-8C-u59"/>
+                <outlet property="btmLineLeftConstraint" destination="xi5-XC-8Sd" id="3t9-5I-Jmz"/>
+                <outlet property="btnLineWidthConstraint" destination="kEq-Xu-EVg" id="jsF-nZ-81m"/>
+                <outlet property="cityBtn" destination="92Z-EW-vg6" id="V4T-kJ-hcH"/>
+                <outlet property="closeBtn" destination="Bpz-hV-2g8" id="JPD-ls-yFa"/>
+                <outlet property="line" destination="lhu-fP-Ert" id="M9T-4p-h6I"/>
+                <outlet property="provinceBtn" destination="fMX-2C-oc0" id="zWp-Jy-Q40"/>
+            </connections>
+            <point key="canvasLocation" x="146.37681159420291" y="360.9375"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="icon_fish_close" width="13.5" height="13.5"/>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
+</document>
