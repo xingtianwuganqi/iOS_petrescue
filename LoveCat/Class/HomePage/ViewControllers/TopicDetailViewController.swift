@@ -133,6 +133,20 @@ class TopicDetailViewController: BaseViewController,View, UIScrollViewDelegate {
             }
         }).disposed(by: disposeBag)
         
+        bottomBack.bottomView.commentBtn.rx.tap.subscribe(onNext: { [weak self] in
+            guard let `self` = self else { return }
+            guard let model = self.reactor?.currentState.model else {
+                return
+            }
+            self.naviService.navigatorSubject.onNext(.ShowCommentList(commentType: .topic_comment, topicId: model.topic_id ?? 0, topicUInfo: model.userInfo, commentResult: {
+                var newModel = model
+                if let num = newModel.commNum {
+                    newModel.commNum = num + 1
+                }
+                self.reactor?.action.onNext(.updateItemModel(newModel))
+            }))
+        }).disposed(by: disposeBag)
+        
         bottomBack.contactBtn.rx.tap.subscribe(onNext: { [weak self] _ in
             guard let `self` = self else { return }
             UserManager.shared.lazyAuthToDoThings {
@@ -233,10 +247,10 @@ extension TopicDetailViewController: UITableViewDelegate {
         .disposed(by: disposeBag)
         
         reactor.state.map{
-            $0.model?.views_num
+            $0.model?.commNum
         }.map({ (num) -> String in
             return (num?.wFormatted ?? "0")
-        }).bind(to: self.bottomBack.bottomView.viewBtn.rx.title())
+        }).bind(to: self.bottomBack.bottomView.commentBtn.rx.title())
         .disposed(by: disposeBag)
         
         reactor.state.map {

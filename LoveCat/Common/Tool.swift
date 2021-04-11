@@ -133,14 +133,18 @@ class Tool: NSObject  {
         
     }
     
+    /// 中间带T的时间字符串
     func timeTDate(time: String) -> String {
-        
+        var timeStr = time
+        if let firstStr = time.components(separatedBy: ".").first {
+            timeStr = firstStr
+        }
+        timeStr = timeStr.replacingOccurrences(of: "T", with: " ")
         let nowDate : Date = Date()
         
         let dateForm : DateFormatter = DateFormatter.init()
         dateForm.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        let date = dateForm.date(from: time) ?? Date()
-        
+        let date = dateForm.date(from: timeStr) ?? Date()
         let userCalendar = Calendar.current
         
         let cmps = userCalendar.dateComponents([Calendar.Component.hour,Calendar.Component.minute,Calendar.Component.second], from: date, to: nowDate)
@@ -164,7 +168,11 @@ class Tool: NSObject  {
         }else if cmps.minute! >= 1{
             return "\(cmps.minute!)分钟前"
         }else{
-            return "\(cmps.second!)秒前"
+            if let second = cmps.second,second > 0 {
+                return "\(second)秒前"
+            }else{
+                return "1秒前"
+            }
         }
         
     }
@@ -180,6 +188,20 @@ class Tool: NSObject  {
         
         
         return attrubuteStr
+    }
+    
+    func getContentAttribute(text: String,fontSize: CGFloat,textColor: UIColor,lineSpacing: CGFloat = 3) -> NSAttributedString {
+        // 标签显示
+        let para = NSMutableParagraphStyle.init()
+        para.lineSpacing = lineSpacing
+        para.lineBreakMode = .byTruncatingTail
+        para.alignment = .justified
+        let attribute = NSMutableAttributedString.init()
+        attribute.append(NSMutableAttributedString.init(string: text,
+                                                        attributes: [NSMutableAttributedString.Key.font: UIFont.et.font(size: fontSize),
+                                                                     NSMutableAttributedString.Key.foregroundColor: textColor]
+        ))
+        return attribute
     }
   
     func TopViewController() -> UIViewController {
@@ -240,6 +262,67 @@ class Tool: NSObject  {
                 return .idle
             }
         }
+    }
+    
+    func cacheReleaseImage(imgInfo: ReleasePhotoModel,cachePath: CacheImgPath) -> String? {
+        let manager = FileManager.default
+        let file = "/Library/\(cachePath.rawValue)_\(UserManager.shared.userId)/"
+        let basefile = NSHomeDirectory() + file
+        if !manager.fileExists(atPath: basefile) {
+            try? manager.createDirectory(atPath: basefile, withIntermediateDirectories: true, attributes: nil)
+        }
+        let imageName = imgInfo.photoKey.components(separatedBy: "/").last ?? "\(Tool.shared.getTime())"
+        let imagePath = basefile + imageName
+        if !manager.fileExists(atPath: imagePath) {
+            do {
+                try imgInfo.image?.pngData()?.write(to: URL(fileURLWithPath: imagePath))
+                return file + imageName
+            }catch {
+                return nil
+            }
+        }else{
+            return file + imageName
+        }
+    }
+    
+    func loadCacheImage(filePath: String) -> UIImage? {
+        let path = NSHomeDirectory() + filePath
+        let manager = FileManager.default
+        if manager.fileExists(atPath: path) {
+            let fileData = try? Data.init(contentsOf: URL(fileURLWithPath: path))
+            if let data = fileData {
+                let image = UIImage.init(data: data)
+                return image
+            }else{
+                return nil
+            }
+        }
+        return nil
+    }
+    
+    func removeCacheImage(cachePath: CacheImgPath) {
+        let path = NSHomeDirectory() + "/Library/\(cachePath.rawValue)_\(UserManager.shared.userId)/"
+        if FileManager.default.fileExists(atPath: path) {
+            do {
+                try FileManager.default.removeItem(atPath: path)
+            }catch {
+                printLog("移除失败")
+            }
+        }
+    }
+    
+    func removeCacheImageItem(cachePath: CacheImgPath,item: ReleasePhotoModel) {
+        if let imageName = item.photoKey.components(separatedBy: "/").last {
+            let path = NSHomeDirectory() + "/Library/\(cachePath.rawValue)_\(UserManager.shared.userId)/\(imageName)"
+            if FileManager.default.fileExists(atPath: path) {
+                do {
+                    try FileManager.default.removeItem(atPath: path)
+                }catch {
+                    printLog("移除失败")
+                }
+            }
+        }
+        
     }
 }
 

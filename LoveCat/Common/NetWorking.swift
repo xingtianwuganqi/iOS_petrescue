@@ -10,6 +10,7 @@ import Moya
 import RxSwift
 import HandyJSON
 import Alamofire
+import MBProgressHUD
 
 var baseUrlConfig: baseUrlType = .formal
 
@@ -131,12 +132,14 @@ final class NetWorking<T: BaseTargetType> : MoyaProvider<T>{
                 printLog(try response.mapJSON())
         }, onError: { (error) in
             let err = error as! MoyaError
-            printLog("☹️☹️☹️ Error: \(target.baseURL)\(target.path) ---- \(err.response?.statusCode ?? 0)")
-            if err.response?.statusCode == 403 {
-                printLog("☹️☹️☹️ TokenError: \(target.baseURL)\(target.path) ---- \(err.response?.statusCode ?? 0)")
-            }else{
-                printLog(err.response?.statusCode)
+            if let baseModel = err.response?.mapModel(EmptyModel.self),baseModel.code == 401 {
+                DispatchQueue.main.async {
+                    MBProgressHUD.xy_show("认证有误,请重新登录")
+                    UserManager.shared.logout()
+
+                }
             }
+            printLog("☹️☹️☹️ Error: \(target.baseURL)\(target.path) ---- \(err.response?.statusCode ?? 0)")
         })
     }
 }

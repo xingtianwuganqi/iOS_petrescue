@@ -27,6 +27,7 @@ final class GambitListReactor: Reactor {
         var dataModels: [GambitListModel] = []
         var section: [GambitListSection] = []
         var selectedModel: GambitListModel?
+        var endRefreshing: RefreshState?
     }
     
     var initialState: State = State()
@@ -57,6 +58,7 @@ final class GambitListReactor: Reactor {
     }
     func reduce(state: State, mutation: Mutation) -> State {
         var state = state
+        state.endRefreshing = nil
         switch mutation {
         case .setGambitList(let items):
             
@@ -73,6 +75,7 @@ final class GambitListReactor: Reactor {
             }
             let section = GambitListSection.gambitSection(infos)
             state.section = [section]
+            state.endRefreshing = .empty
         case .setSelected(let selectModel):
             state.selectedModel = selectModel
             let items = self.currentState.dataModels.map { (model) -> GambitListModel in

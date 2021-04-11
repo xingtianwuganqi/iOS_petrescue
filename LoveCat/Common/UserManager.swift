@@ -19,6 +19,7 @@ final class UserManager {
     var userInfo: UserInfoModel?
     
     var userSubject: PublishSubject<UserInfoModel?> = PublishSubject.init()
+    var loginSuccess: PublishSubject<Void> = PublishSubject.init()
     
     var isLogin: Bool {
         return self.userInfo?.token?.count ?? 0 > 0
@@ -30,6 +31,11 @@ final class UserManager {
         }
     }
     
+    var userId: Int {
+        get {
+            return self.userInfo?.id ?? 0
+        }
+    }
     
     func upLoadUserInfo(_ info: UserInfoModel? = nil) {
         if let userInfo = info {
@@ -60,6 +66,7 @@ final class UserManager {
         UserDefaults.standard.removeObject(forKey: Shield_type.show_sh_reply.rawValue)
         UserDefaults.standard.removeObject(forKey: RescueReleased)
         UserDefaults.standard.removeObject(forKey: ShowReleased)
+        UserDefaults.standard.synchronize()
         self.userInfo = nil
         // 退回首页
         AppHelper.topNavigationController()?.popToRootViewController(animated: false)

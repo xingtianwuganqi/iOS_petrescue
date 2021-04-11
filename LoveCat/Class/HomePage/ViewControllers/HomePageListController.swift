@@ -94,10 +94,21 @@ class HomePageListController: BaseViewController {
             case .homepageItem(let react):
                 let cell = tableView.dequeueReusableCell(withIdentifier: "HomePageTableCell", for: indexPath) as! HomePageTableCell
                 cell.reactor = react
-                cell.moreBtnClick = { model in
-                    UserManager.shared.lazyAuthToDoThings {
-                        let rect = cell.contentView.convert(cell.moreBtn.frame, to: self.view)
-                        self.moreBtnClick(model: model, rect: rect)
+                cell.moreBtnClick = { [weak self] index,model in
+                    guard let `self` = self else { return }
+                    if index == 1 {
+                        UserManager.shared.lazyAuthToDoThings {
+                            let rect = cell.contentView.convert(cell.moreBtn.frame, to: self.view)
+                            self.moreBtnClick(model: model, rect: rect)
+                        }
+                    }else{
+                        self.naviService.navigatorSubject.onNext(.ShowCommentList(commentType: .topic_comment, topicId: model.topic_id ?? 0, topicUInfo: model.userInfo, commentResult: {
+                            var newModel = model
+                            if let num = newModel.commNum {
+                                newModel.commNum = num + 1
+                            }
+                            self.reactor?.action.onNext(.updateItemModel(newModel))
+                        }))
                     }
                 }
                 return cell
@@ -261,6 +272,11 @@ extension HomePageListController: View {
 
         }).disposed(by: disposeBag)
         
+        UserManager.shared.loginSuccess.subscribe(onNext: { _ in
+            if self.reactor?.currentState.pageType == .homePageList {
+                self.reactor?.action.onNext(.loadList(.refresh))
+            }
+        }).disposed(by: disposeBag)
     }
     
     func moreBtnClick(model: HomePageModel,rect: CGRect) {

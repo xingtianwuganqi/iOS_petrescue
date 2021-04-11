@@ -29,8 +29,9 @@ struct ShowPageModel: HandyJSON , Equatable{
 
     mutating func didFinishMapping() {
         let para = NSMutableParagraphStyle.init()
-        para.lineSpacing = 4
+        para.lineSpacing = 3
         para.lineBreakMode = .byTruncatingTail
+        para.alignment = .justified
         let attribute = NSMutableAttributedString.init()
         attribute.append(NSMutableAttributedString.init(string: self.instruction ?? "",
                                                         attributes: [NSMutableAttributedString.Key.font: UIFont.et.fontSize(),
@@ -38,9 +39,7 @@ struct ShowPageModel: HandyJSON , Equatable{
         ))
         self.instructAttribute = attribute
         
-        let timeStr = self.create_time?.components(separatedBy: ".").first
-        let time = timeStr?.replacingOccurrences(of: "T", with: " ")
-        if let time = time {
+        if let time = self.create_time {
             self.create_time = Tool.shared.timeTDate(time: time)
         }else{
             self.create_time = nil
@@ -60,6 +59,20 @@ struct ShowPageModel: HandyJSON , Equatable{
             self.commentAttr = NSAttributedString.init(string: text, attributes: [NSAttributedString.Key.font: UIFont.et.fontSize(.regular, .desc),NSAttributedString.Key.foregroundColor: UIColor.color(.desc)!,NSAttributedString.Key.paragraphStyle: para])
         }
         
+    }
+    
+    func getContentAttribute(fontSize: CGFloat,textColor: UIColor) -> NSAttributedString {
+        // 标签显示
+        let para = NSMutableParagraphStyle.init()
+        para.lineSpacing = 3
+        para.lineBreakMode = .byTruncatingTail
+        para.alignment = .justified
+        let attribute = NSMutableAttributedString.init()
+        attribute.append(NSMutableAttributedString.init(string: self.instruction ?? "",
+                                                        attributes: [NSMutableAttributedString.Key.font: UIFont.et.font(size: fontSize),
+                                                                     NSMutableAttributedString.Key.foregroundColor: textColor]
+        ))
+        return attribute
     }
     
     static func == (lhs: Self, rhs: Self) -> Bool {
@@ -100,9 +113,7 @@ struct CommentListModel: HandyJSON {
                 isOpend = true
             }
         }
-        let timeStr = self.create_time?.components(separatedBy: ".").first
-        let time = timeStr?.replacingOccurrences(of: "T", with: " ")
-        if let time = time {
+        if let time = self.create_time {
             self.create_time = Tool.shared.timeTDate(time: time)
         }else{
             self.create_time = nil
@@ -125,9 +136,8 @@ struct ReplyListModel: HandyJSON {
     var create_time: String?
     
     mutating func didFinishMapping() {
-        let timeStr = self.create_time?.components(separatedBy: ".").first
-        let time = timeStr?.replacingOccurrences(of: "T", with: " ")
-        if let time = time {
+    
+        if let time = self.create_time {
             self.create_time = Tool.shared.timeTDate(time: time)
         }else{
             self.create_time = nil

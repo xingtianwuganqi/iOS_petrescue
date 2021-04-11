@@ -112,10 +112,10 @@ class MinePageViewController: BaseViewController,View {
 extension MinePageViewController: UITableViewDelegate {
     func bind(reactor: MineViewReactor) {
         
-        rx.viewDidLoad.map {
-            Reactor.Action.uploadUnread
-        }.bind(to: reactor.action)
-        .disposed(by: disposeBag)
+//        rx.viewDidLoad.map {
+//            Reactor.Action.uploadUnread
+//        }.bind(to: reactor.action)
+//        .disposed(by: disposeBag)
         
         tableview.rx.setDelegate(self).disposed(by: disposeBag)
         
@@ -153,7 +153,7 @@ extension MinePageViewController: UITableViewDelegate {
                 }else if title == "我的消息" {
                     UserManager.shared.lazyAuthToDoThings {
                         self.naviService.navigatorSubject.onNext(.messagePage(popBack: {
-                            self.reactor?.action.onNext(.uploadUnread)
+//                            self.reactor?.action.onNext(.uploadUnread)
                         }))
                     }
                 }
@@ -210,13 +210,13 @@ extension MinePageViewController: UITableViewDelegate {
                 }
         }).disposed(by: disposeBag)
         
-        reactor.state.map {
-            $0.unreadNum
-        }.subscribe(onNext: { number in
-            if let num = number {
-                AppHelper.shared.unreadNum.onNext(num)
-            }
-        }).disposed(by: disposeBag)
+//        reactor.state.map {
+//            $0.unreadNum
+//        }.subscribe(onNext: { number in
+//            if let num = number {
+//                AppHelper.shared.unreadNum.onNext(num)
+//            }
+//        }).disposed(by: disposeBag)
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {

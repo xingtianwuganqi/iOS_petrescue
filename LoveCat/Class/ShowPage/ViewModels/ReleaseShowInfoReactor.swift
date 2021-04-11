@@ -20,6 +20,7 @@ final class ReleaseShowInfoReactor: Reactor {
         case releaseShowInfo(content: String,imgs: String,gambit_id: Int?)
         case updatePhotos(ReleasePhotoModel)
         case gambitInfo(GambitListModel?)
+        case reloadCacheData(CacheReleaseInfo)
     }
     
     enum Mutation {
@@ -35,6 +36,7 @@ final class ReleaseShowInfoReactor: Reactor {
         case setErrorMsg(String?)
 //        case setContact(String?)
         case setGambitInfo(GambitListModel?)
+        case setCacheData(CacheReleaseInfo)
     }
     
     struct State {
@@ -100,6 +102,8 @@ final class ReleaseShowInfoReactor: Reactor {
             return Observable.just(Mutation.setDeletePhoto(deleteModel))
         case .gambitInfo(let infos):
             return .just(.setGambitInfo(infos))
+        case .reloadCacheData(let data):
+            return .just(.setCacheData(data))
         }
     }
     
@@ -151,6 +155,18 @@ final class ReleaseShowInfoReactor: Reactor {
             state.releaseResult = releaseResult
         case .setGambitInfo(let infos):
             state.gambitInfo = infos
+        case .setCacheData(let cacheData):
+            let cacheModels = cacheData.photos?.map({ (cacheModel) -> ReleasePhotoModel in
+                var photoModel = ReleasePhotoModel.init()
+                if let imgStr = cacheModel.image ,let image = Tool.shared.loadCacheImage(filePath: imgStr ) {
+                    photoModel.image = image
+                }
+                photoModel.photoKey = cacheModel.photoKey ?? ""
+                photoModel.isAdd = cacheModel.isAdd
+                return photoModel
+            }) ?? []
+            state.photoModels = cacheModels + state.photoModels
+            state.gambitInfo = cacheData.gambit
         default:
             break
         }

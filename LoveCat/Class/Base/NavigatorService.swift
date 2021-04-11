@@ -33,11 +33,14 @@ enum NavigatorItem {
     case releaseShowInfo(result: ((Bool) -> Void)?)
     case selectGambit(normal: GambitListModel?,selected: ((GambitListModel?) -> Void)?)
     case publishMain(type: PageType)
-    case showInfoPage(type: ShowPageType,gambitId: Int?)
+    case showInfoPage(type: ShowPageType,gambitId: Int?,showId: Int?)
     case settingChangePswd
-    case ShowCommentList(topicId: Int)
+    case ShowCommentList(commentType: CommentType, topicId: Int,topicUInfo: UserInfoModel?,commentResult:(() -> Void)?)
     case messagePage(popBack: (() -> Void)?)
     case violationsPage(report_type: Report_type,report_id: Int)
+    case messageList(msg_type: MsgType,readedBlock: (() -> Void)?)
+    case sysMsgPage(readedBlock: (() -> Void)?)
+    case createNewGambit
 }
 
 final class NavigatorService: NavigatorServiceType {
@@ -72,7 +75,9 @@ final class NavigatorService: NavigatorServiceType {
                 self.navigator.push(changePage)
             case .releaseTopic(result: let result):
                 let release = ReleaseTopicViewController.init(navi: self, result: result)
-                self.navigator.push(release)
+                let naviBar = BaseNavigationController.init(rootViewController: release)
+                naviBar.modalPresentationStyle = .overFullScreen
+                self.navigator.present(naviBar)
             case .selectCity(selectedBlock: let block):
                 let city = CityViewController.init(navi: self, selectedBlock: block)
                 city.modalPresentationStyle = .overFullScreen
@@ -108,22 +113,32 @@ final class NavigatorService: NavigatorServiceType {
                 let vc = TagsViewController.init(navi: self, normal: normal, selectedBlock: block)
                 self.navigator.push(vc)
             case .releaseShowInfo(result: let block):
-                let vc = ReleaseShowInfoController.init(navi: self, result: block)
-                self.navigator.push(vc)
+                
+                let release = ReleaseShowInfoController.init(navi: self, result: block)
+                let naviBar = BaseNavigationController.init(rootViewController: release)
+                naviBar.modalPresentationStyle = .overFullScreen
+                self.navigator.present(naviBar)
+                
             case .selectGambit(let normal,let block):
                 let vc = GambitListController.init(navi: self, normal: normal, selected: block)
                 self.navigator.push(vc)
             case .publishMain(let type):
                 let vc = PublishMainViewController.init(navi: self,type: type)
                 self.navigator.push(vc)
-            case .showInfoPage(type: let type, gambitId: let gambitId):
-                let controller = ShowPageListController.init(navi: self, type: type,gambitId: gambitId)
+            case .showInfoPage(type: let type, gambitId: let gambitId,showId: let showId):
+                let controller = ShowPageListController.init(navi: self, type: type,gambitId: gambitId,showId: showId)
                 self.navigator.push(controller)
             case .settingChangePswd:
                 let vc = ChangePswdViewController.init()
                 self.navigator.push(vc)
-            case .ShowCommentList(topicId: let topicId):
-                let vc = CommentListController.init(navi: self,topicId: topicId)
+            case .ShowCommentList(commentType: let type, topicId: let topicId,topicUInfo: let userInfo,commentResult: let result):
+                let vc = CommentListController.init(navi: self,
+                                                    comment_type: type,
+                                                    topicId: topicId,
+                                                    topicUInfo: userInfo,
+                                                    commentResult: result
+                )
+                
                 let navi = BaseNavigationController.init(rootViewController: vc)
                 self.navigator.present(navi)
             case .messagePage(popBack:let black):
@@ -131,7 +146,18 @@ final class NavigatorService: NavigatorServiceType {
                 self.navigator.push(vc)
             case .violationsPage(report_type: let type, report_id: let report_id):
                 let vc = ReportViewController.init(navi: self,
-                                                   reactor: ReportReactor.init(report_Type: type, report_Id: report_id))
+                                                   reactor: ReportReactor.init(report_Type: type,
+                                                                               report_Id: report_id))
+                self.navigator.push(vc)
+            case .messageList(msg_type: let type,readedBlock: let block):
+                let vc = MessageListController.init(navi: self, msgType: type, readedBlock: block)
+                self.navigator.push(vc)
+            case .sysMsgPage(readedBlock: let block):
+                let vc = SystemMessageController.init(navi: self,readedBlock: block)
+                self.navigator.push(vc)
+                
+            case .createNewGambit:
+                let vc = CreateGambitController.init()
                 self.navigator.push(vc)
             }
         }).disposed(by: disposeBag)

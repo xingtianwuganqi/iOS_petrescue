@@ -84,7 +84,7 @@ class GambitListCell: UITableViewCell {
         
         bottomLine.snp.makeConstraints { (make) in
             make.left.equalToSuperview().offset(15)
-            make.right.equalToSuperview().offset(-15)
+            make.right.equalToSuperview().offset(-25)
             make.bottom.equalToSuperview()
             make.height.equalTo(0.5)
         }

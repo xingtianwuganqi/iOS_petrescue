@@ -17,6 +17,8 @@ final class TopicDetailReactor: Reactor {
         case clickCollection(HomePageModel)
         case getContact(Int)
         case addViewHistory
+        case updateItemModel(HomePageModel)
+
     }
     
     enum Mutation {
@@ -28,6 +30,8 @@ final class TopicDetailReactor: Reactor {
         case setContact(String?)
         case setGetContactLoading(Bool)
         case setAddHistory
+        case setUpdateItem(HomePageModel)
+
     }
     
     struct State {
@@ -137,6 +141,9 @@ final class TopicDetailReactor: Reactor {
                 return Mutation.setAddHistory
             }
             return request
+            
+        case .updateItemModel(let model):
+            return Observable.just(Mutation.setUpdateItem(model))
         }
     }
     
@@ -204,6 +211,11 @@ final class TopicDetailReactor: Reactor {
             }
         case .setAddHistory:
             return state
+            
+        case .setUpdateItem(let model):
+            state.model = model
+            state.section = self.setupSection(model: model)
+            state.loadEnd = true
         }
         return state
     }

@@ -73,11 +73,9 @@ extension FindPswdConfirmReactor {
 
 extension FindPswdConfirmReactor {
     func netWorking(phone: String) -> Observable<BaseModel<EmptyModel>?> {
-        return netWorking.request(.confirmPhone(account: phone.et.md5String))
+        return netWorking.request(.confirmPhone(account: phone))
             .mapData(EmptyModel.self)
     }
-    
- 
 }
     
 //    func netWorking(phone: String) {

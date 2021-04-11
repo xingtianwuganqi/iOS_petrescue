@@ -30,6 +30,7 @@ class MyCollectionCell: UITableViewCell,View {
         let content = YYLabel.init()
         content.textColor = UIColor.color(.content)
         content.font = UIFont.et.fontSize()
+        content.preferredMaxLayoutWidth = SCREEN_WIDTH - 30
         content.numberOfLines = 7
         let text = NSMutableAttributedString()
         text.append(NSAttributedString.init(string: "...", attributes: [NSAttributedString.Key.foregroundColor: UIColor.color(.content)!,NSAttributedString.Key.font: UIFont.et.fontSize()]))

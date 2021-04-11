@@ -18,3 +18,19 @@ public protocol CellRepresentable {
     var cellIdentifier: String { get }
     func cellInstance(_ tableView: UITableView, indexPath: IndexPath, currentController: UIViewController?) -> UITableViewCell
 }
+
+
+enum Paging {
+    case refresh
+    case next
+}
+
+/// 常用状态
+protocol StateProtocal {
+    var isLoading: Bool {get set}
+    var isRefreshing: Bool {get set}
+    var endRefreshing: RefreshState? {get set}
+    var netError: Bool {get set}
+    var errorMsg: String? {get set}
+    var page: Int {get set}
+}

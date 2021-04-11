@@ -21,7 +21,7 @@ target 'LoveCat' do
   pod 'ESTabBarController-swift'
   pod 'HBDNavigationBar', '~> 1.7.7'
   pod 'HandyJSON', '~> 5.0.3-beta'
-  pod 'QMUIKit'
+  pod 'QMUIKit','~> 4.2.3'
   pod 'YYKit'
   pod 'SwifterSwift'
   pod 'ReachabilitySwift'
@@ -29,7 +29,7 @@ target 'LoveCat' do
   pod 'MJRefresh'
   pod 'DZNEmptyDataSet'
   pod 'JXSegmentedView'
-  pod 'ShowBigImg', '~> 0.0.8'
+  pod 'ShowBigImg', '~> 0.0.11'
   pod 'IQKeyboardManagerSwift'
   pod 'JPush'
 end

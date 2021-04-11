@@ -23,13 +23,7 @@ final class CompositionRoot {
         UserManager.shared.upLoadUserInfo()
         UserManager.shared.naviServer = naviService
         
-        let homepage = HomePageListController.init(navi: naviService)
-        let showList = ShowPageListController.init(navi: naviService, type: .showInfoList)
-        let gambit = GambitListController.init(navi: naviService, normal: nil, selected: nil)
-        let video = ShowPageMainViewController.init(pages: [showList,gambit], defaultIndex: 0)
-        let mine = MinePageViewController(navi: naviService)
-        
-        let mainTB = MainTabbarController.init(naviService: naviService, homePage: homepage, videoPage: video, minePage: mine)
+        let mainTB = MainTabbarController.init(naviService: naviService)
         
         let window = UIWindow.init(frame: UIScreen.main.bounds)
         window.rootViewController = mainTB

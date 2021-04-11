@@ -15,6 +15,6 @@ struct UserInfoModel: HandyJSON {
     var phone_number: String?
     var email: String?
     var create_time: String?
-    var user_id: Int?
+    var id: Int?
     var wx_id: String?
 }

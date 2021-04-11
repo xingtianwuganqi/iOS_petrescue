@@ -82,14 +82,14 @@ class ShowListBottomView: UIView {
         collectionBtn.snp.makeConstraints { (make) in
             make.top.bottom.equalToSuperview()
             make.left.equalTo(likeBtn.snp.right)
-            make.width.equalTo(likeBtn)
+            make.width.equalTo(btnWidth / 3)
 
         }
         
         commentBtn.snp.makeConstraints { (make) in
             make.top.bottom.equalToSuperview()
             make.right.equalToSuperview()
-            make.width.equalTo(likeBtn)
+            make.width.equalTo(btnWidth / 3)
         }
         
     }

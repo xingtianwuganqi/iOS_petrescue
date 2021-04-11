@@ -33,14 +33,14 @@ extension UIImageView: ETExtensionCompatible {
 
 }
 extension ET where Base: UIImageView {
-    func sd_setImage(_ url: String?,showType: ImageType = .origin,completed: SDExternalCompletionBlock? = nil) {
+    func sd_setImage(_ url: String?,showType: ImageType = .origin,placeholder: String = "icon_plh",completed: SDExternalCompletionBlock? = nil) {
         var imgUrl = ""
         if showType == .thumbnail {
             imgUrl = IMGURL + (url ?? "") + IMGTHUMBNAIL
         }else{
             imgUrl = IMGURL + (url ?? "")
         }
-        base.sd_setImage(with: URL(string: imgUrl), placeholderImage: UIImage(named: "icon_plh"), options: .allowInvalidSSLCertificates, completed: completed)
+        base.sd_setImage(with: URL(string: imgUrl), placeholderImage: UIImage(named: placeholder), options: .allowInvalidSSLCertificates, completed: completed)
     }
     
     /// 添加水印

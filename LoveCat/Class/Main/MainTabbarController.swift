@@ -15,23 +15,15 @@ class MainTabbarController: ESTabBarController {
     enum TabbarItemTitle: String {
         case homePage = "首页"
         case video = "秀宠"
+        case message = "消息"
         case mine = "我的"
     }
     
     fileprivate let naviService: NavigatorServiceType
-    fileprivate let homePage: HomePageListController
-    fileprivate let videoPage: ShowPageMainViewController
-    fileprivate let minePage: MinePageViewController
     fileprivate var currentSelect: Int = -1
     fileprivate var lastSelectTime: TimeInterval?
-    fileprivate lazy var networking = NetWorking<MinePageApi>()
-    init(naviService: NavigatorServiceType,
-         homePage: HomePageListController,
-         videoPage: ShowPageMainViewController,
-         minePage: MinePageViewController) {
-        self.homePage = homePage
-        self.videoPage = videoPage
-        self.minePage = minePage
+    fileprivate lazy var networking = NetWorking<MessageApi>()
+    init(naviService: NavigatorServiceType) {
         self.naviService = naviService
         super.init(nibName: nil, bundle: nil)
         
@@ -46,25 +38,35 @@ class MainTabbarController: ESTabBarController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let homePage = HomePageListController.init(navi: naviService)
+        let showList = ShowPageListController.init(navi: naviService, type: .showInfoList)
+        let gambit = GambitListController.init(navi: naviService, normal: nil, selected: nil)
+        let video = ShowPageMainViewController.init(pages: [showList,gambit], defaultIndex: 0)
+        let message = MessagePageController.init(navi: naviService)
+        let minePage = MinePageViewController(navi: naviService)
 
         self.addChildVC(viewController: homePage, title: TabbarItemTitle.homePage.rawValue, selectImage: "icon_tabbar_cat_se", unselectImage: "icon_tabbar_cat_un")
-        self.addChildVC(viewController: videoPage, title: TabbarItemTitle.video.rawValue, selectImage: "icon_tabbar_dog_se", unselectImage: "icon_tabbar_dog_un")
+        self.addChildVC(viewController: video, title: TabbarItemTitle.video.rawValue, selectImage: "icon_tabbar_dog_se", unselectImage: "icon_tabbar_dog_un")
+        self.addChildVC(viewController: message, title: TabbarItemTitle.message.rawValue, selectImage: "icon_tabbar_msg_se", unselectImage: "icon_tabbar_msg_un")
         self.addChildVC(viewController: minePage, title: TabbarItemTitle.mine.rawValue, selectImage: "icon_tabbar_mi_se", unselectImage: "icon_tabbar_mi_un")
         
         self.delegate = self
-        self.setTabbarController()
+//        self.setTabbarController()
         
         messageNumNetworking()
         
         AppHelper.shared.unreadNum.subscribe(onNext: { num in
-            if let esTabbar = self.tabBar.items?.last as? ESTabBarItem{
-                if num > 0 {
-                    esTabbar.badgeValue = "\(num)"
+            if let esTabbar = self.tabBar.items?[2] as? ESTabBarItem{
+                if num > 0{
+                    esTabbar.badgeValue = num.et_unread
                 }else{
                     esTabbar.badgeValue = nil
                 }
             }
         }).disposed(by: disposeBag)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(didBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
     
     func addChildVC(viewController: UIViewController,title: String,selectImage: String,unselectImage: String) {
@@ -80,22 +82,6 @@ class MainTabbarController: ESTabBarController {
         }
     }
     
-    func setTabbarController() {
-        self.tabBarItem.qmui_doubleTapBlock = { item, index in
-            switch index {
-            case 0:
-                self.homePage.refreshNetWorking(page: .refresh)
-            case 1:
-                (self.videoPage.pages?[self.videoPage.currentIndex] as? BaseViewController)?.refreshNetWorking(page: .refresh)
-            case 2:
-                break
-            default:
-                break
-            }
-        }
-        
-    }
-    
     fileprivate func scrollToTop(_ viewController: UIViewController) {
         if let navigationController = viewController as? UINavigationController {
             let topViewController = navigationController.topViewController
@@ -109,8 +95,10 @@ class MainTabbarController: ESTabBarController {
                     if let viewC = vc as? ShowPageMainViewController,viewC.currentIndex != -1 {
                         (viewC.pages?[viewC.currentIndex] as? BaseViewController)?.rxRefresh.onNext(Void())
                     }
+                case is MessagePageController.Type:
+                    (vc as? BaseViewController)?.rxRefresh.onNext(Void())
                 case is MinePageViewController.Type:
-                    self.messageNumNetworking()
+                    break
                 default:
                     break
                 }
@@ -121,14 +109,21 @@ class MainTabbarController: ESTabBarController {
         scrollView.setContentOffset(.zero, animated: true)
     }
     
+    @objc func didBecomeActive() {
+        self.messageNumNetworking()
+    }
+    
     func messageNumNetworking() {
-        let observal = networking.request(.authUnReadNum).mapData(UnreadModel.self)
-        observal.subscribe(onNext: { [weak self] baseModel in
+        let observal = networking.request(.authUnReadNum).mapData(MessageNumModel.self)
+        observal.subscribe(onNext: { [weak self] baseModel in //
             guard let `self` = self else { return }
             if baseModel?.isSuccess ?? false {
-                if let esTabbar = self.tabBar.items?.last as? ESTabBarItem {
-                    if let num = baseModel?.data?.number,num > 0  {
-                        esTabbar.badgeValue = "\(num)"
+                if let esTabbar = self.tabBar.items?[2] as? ESTabBarItem {
+                    let num = (baseModel?.data?.like_unread ?? 0) + (baseModel?.data?.collec_unread ?? 0)
+                    let sysNum = (baseModel?.data?.sys_unread ?? 0) + (baseModel?.data?.com_unread ?? 0)
+                    let total = num + sysNum
+                    if total > 0{
+                        esTabbar.badgeValue = total.et_unread
                     }else{
                         esTabbar.badgeValue = nil
                     }
@@ -136,7 +131,6 @@ class MainTabbarController: ESTabBarController {
             }
         }).disposed(by: disposeBag)
     }
-    
 }
 extension MainTabbarController: UITabBarControllerDelegate {
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
@@ -150,7 +144,6 @@ extension MainTabbarController: UITabBarControllerDelegate {
             let current = Date.init().timeIntervalSince1970
             if current - (lastSelectTime ?? 0) < 0.8 {
                 self.scrollToTop(viewController)
-                
             }
         }
         self.lastSelectTime = Date.init().timeIntervalSince1970

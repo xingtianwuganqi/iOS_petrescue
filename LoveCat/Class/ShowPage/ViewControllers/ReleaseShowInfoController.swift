@@ -118,6 +118,14 @@ class ReleaseShowInfoController: BaseViewController,View {
         return button
     }()
     
+    lazy var dismissBtn: UIButton = {
+        let backNavBtn = UIButton(frame: CGRect(x: 0, y: 0, width: 40, height: 40.0))
+        backNavBtn.contentHorizontalAlignment = .left
+        backNavBtn.setImage(UIImage(named: "icon_a_back"), for: .normal)
+        backNavBtn.setImage(UIImage(named: "icon_a_back"), for: .highlighted)
+        return backNavBtn
+    }()
+    
     lazy var bottomBack: UIView = {
         let back = UIView()
         back.backgroundColor = UIColor.color(.tableBack)
@@ -185,6 +193,18 @@ class ReleaseShowInfoController: BaseViewController,View {
         super.setupConstraints()
         
         self.navigationItem.rightBarButtonItem = UIBarButtonItem.init(customView: releaseBtn)
+        self.navigationItem.leftBarButtonItem = UIBarButtonItem.init(customView: dismissBtn)
+        self.dismissBtn.rx.tap.subscribe(onNext: {
+            if self.canDismiss(isSave: false) != nil {
+                /// 弹出询问弹窗
+                self.showCacheSheetAlert()
+            }else {
+                DispatchQueue.main.async {
+                    self.navigationController?.dismiss(animated: true, completion: nil)
+                }
+            }
+        }).disposed(by: disposeBag)
+        
         /* FkV6TtZjT0GzvcXAqJM4kHwqwXr0  FkV6TtZjT0GzvcXAqJM4kHwqwXr0*/
         self.releaseBtn.rx.tap.subscribe(onNext: { [weak self] in
             guard let `self` = self else { return }
@@ -336,9 +356,13 @@ class ReleaseShowInfoController: BaseViewController,View {
         photoView.deleteItmeBlock = { [weak self](item) in
             guard let `self` = self else { return }
             self.reactor?.action.onNext(.deletePhoto(img: item))
+            Tool.shared.removeCacheImageItem(cachePath: .show, item: item)
+            self.removeChacheItem(item: item)
         }
         
         self.textCountLab.text = "\(self.textView.text.count)/1000"
+        
+        self.loadCacheData()
     }
     
     func resignFirst() {
@@ -477,8 +501,9 @@ extension ReleaseShowInfoController {
             self.view.xy_hideHUD()
             self.view.xy_show("发布成功")
             self.releaseSuccess?(true)
+            Tool.shared.removeCacheImage(cachePath: .show)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                self.navigationController?.popViewController(animated: true)
+                self.navigationController?.dismiss(animated: true, completion: nil)
             }
         }).disposed(by: disposeBag)
         
@@ -558,6 +583,40 @@ extension ReleaseShowInfoController {
 
         let info = ReleaseShowInfo.init(content: content, photos: photos)
         return info
+    }
+    
+    func canDismiss(isSave: Bool) -> CacheReleaseInfo? {
+        var photos: [CacheReleasePhoto]?
+        var content: String?
+        var gambitInfo: GambitListModel?
+        
+        if let contentInfo = self.textView.text,contentInfo.count > 0 {
+            content = contentInfo
+        }
+        
+        if let photoInfos = self.reactor?.currentState.photoModels.filter({ (model) -> Bool in
+            return model.isAdd == false
+        }),photoInfos.count > 0 {
+            photos = photoInfos.map({ (model) -> CacheReleasePhoto in
+                var newModel = CacheReleasePhoto.init()
+                newModel.photoKey = model.photoKey
+                if isSave,let imgPath = Tool.shared.cacheReleaseImage(imgInfo: model, cachePath: .show) {
+                    newModel.image = imgPath
+                }
+                newModel.isAdd = model.isAdd
+                return newModel
+            })
+        }
+        
+        if let gambit = self.reactor?.currentState.gambitInfo {
+            gambitInfo = gambit
+        }
+        
+        if photos != nil || content != nil || gambitInfo != nil {
+            return CacheReleaseInfo.init(photos: photos, content: content, gambit: gambitInfo)
+        }else{
+            return nil
+        }
     }
     
     func uploadImg(token: String) {
@@ -752,4 +811,82 @@ extension ReleaseShowInfoController: UIImagePickerControllerDelegate,UINavigatio
         self.reactor?.action.onNext(.addPhoto(img: image))
     }
     
+}
+
+extension ReleaseShowInfoController {
+    func showCacheSheetAlert() {
+        let alert = UIAlertController.init(title: nil, message: "保存草稿吗？", preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction.init(title: "保存草稿", style: .default, handler: { [weak self](_) in
+            guard let `self` = self else { return }
+            self.saveCacheAction()
+        }))
+        
+        alert.addAction(UIAlertAction.init(title: "不保存", style: .default, handler: { [weak self](_) in
+            guard let `self` = self else { return }
+            self.deleteCacheAction()
+        }))
+        
+        alert.addAction(UIAlertAction.init(title: "取消", style: .cancel, handler: { (_) in
+            
+        }))
+        
+        DispatchQueue.main.async {
+            
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                alert.popoverPresentationController?.sourceRect = CGRect(x: 0, y: SCREEN_HEIGHT - 20, width: SCREEN_WIDTH, height: 20)
+                alert.popoverPresentationController?.sourceView = self.view
+            }
+            
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+    
+    func saveCacheAction() {
+        guard let cache = self.canDismiss(isSave: true),let cacheStr = cache.toJSONString() else {
+            return
+        }
+        UserDefaults.standard.setValue(cacheStr, forKey: CacheImgPath.show.rawValue)
+        UserDefaults.standard.synchronize()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.navigationController?.dismiss(animated: true, completion: nil)
+        }
+    }
+    
+    func deleteCacheAction() {
+        Tool.shared.removeCacheImage(cachePath: .show)
+        UserDefaults.standard.removeObject(forKey: CacheImgPath.show.rawValue)
+        UserDefaults.standard.synchronize()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.navigationController?.dismiss(animated: true, completion: nil)
+        }
+    }
+    
+    func loadCacheData() {
+        guard let data = UserDefaults.standard.value(forKey: CacheImgPath.show.rawValue) as? String,data.count > 0 else {
+            return
+        }
+        
+        guard let model = CacheReleaseInfo.deserialize(from: data) else {
+            return
+        }
+        self.textView.text = model.content
+        self.reactor?.action.onNext(.reloadCacheData(model))
+        
+    }
+    
+    func removeChacheItem(item: ReleasePhotoModel) {
+        guard let data = UserDefaults.standard.value(forKey: CacheImgPath.show.rawValue) as? String,data.count > 0 else {
+            return
+        }
+        
+        guard let model = CacheReleaseInfo.deserialize(from: data) else {
+            return
+        }
+        let cache = model.photos?.filter({ (model) -> Bool in
+            return model.photoKey != item.photoKey
+        })
+        let cacheStr = cache?.toJSONString()
+        UserDefaults.standard.setValue(cacheStr, forKey: CacheImgPath.show.rawValue)
+        UserDefaults.standard.synchronize()
+    }
 }

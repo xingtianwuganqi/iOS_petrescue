@@ -71,9 +71,15 @@ class HomePageTableCell: UITableViewCell,View {
         return bottomLine
     }()
     
-    lazy var bottomView: TopicBottomView = {
-        let btmView = TopicBottomView.init(width: HomePageTableCell.contentWidth)
-        return btmView
+//    lazy var bottomView: ShowListBottomView = {
+//        let btmView = TopicBottomView.init(width: HomePageTableCell.contentWidth)
+//        return btmView
+//    }()
+    
+    lazy var bottomView : ShowListBottomView = {
+        let backview = ShowListBottomView(width: HomePageTableCell.contentWidth)
+        backview.backgroundColor = .white
+        return backview
     }()
     
     
@@ -84,7 +90,7 @@ class HomePageTableCell: UITableViewCell,View {
     
     var imgHeightConstraint: Constraint?
     
-    var moreBtnClick: ((HomePageModel) -> Void)?
+    var moreBtnClick: ((Int,HomePageModel) -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -136,7 +142,7 @@ class HomePageTableCell: UITableViewCell,View {
         textView.snp.makeConstraints { (make) in
             make.left.equalTo(userName.snp.left)
             make.top.equalTo(userName.snp.bottom).offset(10)
-            make.right.equalTo(userName.snp.right)
+            make.right.equalToSuperview().offset(-15)
         }
         
         imgCollection.snp.makeConstraints { (make) in
@@ -174,7 +180,7 @@ class HomePageTableCell: UITableViewCell,View {
         }
         
         moreBtn.snp.makeConstraints { (make) in
-            make.right.equalToSuperview().offset(-7)
+            make.right.equalToSuperview().offset(-15)
             make.size.equalTo(CGSize(width: 40, height: 30))
             make.centerY.equalTo(userName)
         }
@@ -235,20 +241,6 @@ extension HomePageTableCell {
         }.bind(to: self.addressView.addressBtn.rx.title())
         .disposed(by: disposeBag)
         
-//        reactor.state.map {
-//            $0.model?.is_get_contact
-//        }.subscribe(onNext: { [weak self] isGet in
-//            guard let `self` = self else { return }
-//            guard let contact = reactor.currentState.model?.contact else {
-//                return
-//            }
-////            if isGet ?? false{
-////                self.contactView.contactBtn.setTitle(contact, for: .normal)
-////            }else{
-////                self.contactView.contactBtn.setTitle("点击获取联系方式", for: .normal)
-////            }
-//        }).disposed(by: disposeBag)
-        
         reactor.state.map { (state) -> Bool in
             state.model?.liked == 1
         }.bind(to: self.bottomView.likeBtn.rx.isSelected)
@@ -267,33 +259,38 @@ extension HomePageTableCell {
         }).disposed(by: disposeBag)
         
         reactor.state.map{
-            $0.model?.views_num
-        }.map({ (num) -> String in
-            return "\(num?.wFormatted ?? "0")"
-        }).bind(to: self.bottomView.viewBtn.rx.title())
+            $0.model?.commNum
+        }.map({ (number) -> String in
+            if let num = number,num > 0 {
+                return "\(num.wFormatted)"
+            }else{
+                return "评论"
+            }
+        }).bind(to: self.bottomView.commentBtn.rx.title())
         .disposed(by: disposeBag)
         
-        reactor.state.map {
-            $0.model?.likes_num
-        }.subscribe(onNext: { [weak self] number in
-            guard let `self` = self else { return }
-            if let num = number,num > 0 {
-                self.bottomView.likeBtn.setTitle("\(num.wFormatted)", for: .normal)
-            }else{
-                self.bottomView.likeBtn.setTitle("点赞", for: .normal)
-            }
-        }).disposed(by: disposeBag)
         
-        reactor.state.map {
-            $0.model?.collection_num
-        }.subscribe(onNext: { [weak self] number in
-            guard let `self` = self else { return }
+        reactor.state.map{
+            $0.model?.likes_num
+        }.map({ (number) -> String in
             if let num = number,num > 0 {
-                self.bottomView.collectionBtn.setTitle("\(num.wFormatted)", for: .normal)
+                return "\(num.wFormatted)"
             }else{
-                self.bottomView.collectionBtn.setTitle("收藏", for: .normal)
+                return "点赞"
             }
-        }).disposed(by: disposeBag)
+        }).bind(to: self.bottomView.likeBtn.rx.title())
+        .disposed(by: disposeBag)
+        
+        reactor.state.map{
+            $0.model?.collection_num
+        }.map({ (number) -> String in
+            if let num = number,num > 0 {
+                return "\(num.wFormatted)"
+            }else{
+                return "收藏"
+            }
+        }).bind(to: self.bottomView.collectionBtn.rx.title())
+        .disposed(by: disposeBag)
         
         bottomView.likeBtn.rx.tap.subscribe(onNext: { [weak self] _ in
             guard let `self` = self else { return }
@@ -315,12 +312,23 @@ extension HomePageTableCell {
             }
         }).disposed(by: disposeBag)
         
+        bottomView.commentBtn.rx.tap.subscribe(onNext: {
+            [weak self] _ in
+                guard let `self` = self else { return }
+                UserManager.shared.lazyAuthToDoThings {
+                    guard let model = self.reactor?.currentState.model else {
+                        return
+                    }
+                    self.moreBtnClick?(2,model)
+                }
+        }).disposed(by: disposeBag)
+        
         moreBtn.rx.tap.subscribe(onNext: { [weak self] _ in
             guard let `self` = self else { return }
             guard let model = self.reactor?.currentState.model else {
                 return
             }
-            self.moreBtnClick?(model)
+            self.moreBtnClick?(1,model)
         }).disposed(by: disposeBag)
         
         reactor.state.map {
@@ -331,14 +339,14 @@ extension HomePageTableCell {
             guard let `self` = self else { return }
             if complete {
                 self.completeImg.isHidden = false
-                self.moreBtn.snp.updateConstraints { (make) in
-                    make.right.equalToSuperview().offset(-40)
-                }
+//                self.moreBtn.snp.updateConstraints { (make) in
+//                    make.right.equalToSuperview().offset(-10)
+//                }
             }else{
                 self.completeImg.isHidden = true
-                self.moreBtn.snp.updateConstraints { (make) in
-                    make.right.equalToSuperview().offset(-7)
-                }
+//                self.moreBtn.snp.updateConstraints { (make) in
+//                    make.right.equalToSuperview().offset(-7)
+//                }
             }
         }).disposed(by: disposeBag)
     }

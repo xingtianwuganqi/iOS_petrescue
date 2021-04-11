@@ -76,9 +76,8 @@ struct MessageInfoModel: HandyJSON {
     var msgAttr: NSAttributedString?
     
     mutating func didFinishMapping() {
-        let timeStr = self.create_time?.components(separatedBy: ".").first
-        let time = timeStr?.replacingOccurrences(of: "T", with: " ")
-        if let time = time {
+        
+        if let time = self.create_time {
             self.create_time = Tool.shared.timeTDate(time: time)
         }else{
             self.create_time = nil

@@ -10,6 +10,12 @@ import ReactorKit
 import RxDataSources
 import SnapKit
 import MBProgressHUD
+
+enum CommentType: Int {
+    case topic_comment = 1
+    case show_comment = 2
+}
+
 class CommentListController: BaseViewController,View {
     
     typealias Reactor = CommentListReactor
@@ -47,12 +53,13 @@ class CommentListController: BaseViewController,View {
     }()
     fileprivate var heightConstraint: Constraint?
     var dataSource: RxTableViewSectionedReloadDataSource<CommentListSection>!
-    
-    init(navi: NavigatorServiceType,topicId: Int) {
+    fileprivate var commentResult:(() -> Void)?
+    init(navi: NavigatorServiceType,comment_type: CommentType,topicId: Int,topicUInfo: UserInfoModel?,commentResult:(() -> Void)?) {
         super.init(navi: navi)
         self.dataSource = self.dataSourceFactory()
+        self.commentResult = commentResult
         defer {
-            self.reactor = CommentListReactor.init(topicId: topicId)
+            self.reactor = CommentListReactor.init(commentType: comment_type, topicId: topicId, topicUserInfo: topicUInfo)
         }
     }
     
@@ -204,12 +211,12 @@ extension CommentListController: UITableViewDelegate,UITextFieldDelegate {
                 }
                 switch item {
                 case .commentItem(let comReac):
-                    reactor.action.onNext(.changeComment(comment_id: comReac.currentState.model?.comment_id, reply_id: comReac.currentState.model?.comment_id, to_uid: comReac.currentState.model?.userInfo?.user_id))
+                    reactor.action.onNext(.changeComment(comment_id: comReac.currentState.model?.comment_id, reply_id: comReac.currentState.model?.comment_id, to_uid: comReac.currentState.model?.userInfo?.id))
                     self.textInputView.textField.becomeFirstResponder()
                     let nickName = comReac.currentState.model?.userInfo?.username ?? ""
                     self.textInputView.textField.placeholder = "回复\(nickName)"
                 case .replyItem(let replyReac):
-                    reactor.action.onNext(.changeComment(comment_id: replyReac.currentState.model?.comment_id, reply_id: replyReac.currentState.model?.id, to_uid: replyReac.currentState.model?.fromInfo?.user_id))
+                    reactor.action.onNext(.changeComment(comment_id: replyReac.currentState.model?.comment_id, reply_id: replyReac.currentState.model?.id, to_uid: replyReac.currentState.model?.fromInfo?.id))
                     self.textInputView.textField.becomeFirstResponder()
                     let nickName = replyReac.currentState.model?.fromInfo?.username ?? ""
                     self.textInputView.textField.placeholder = "回复\(nickName)"
@@ -260,6 +267,16 @@ extension CommentListController: UITableViewDelegate,UITextFieldDelegate {
                 MBProgressHUD.xy_show(activity: nil)
             }else{
                 MBProgressHUD.xy_hide()
+            }
+        }).disposed(by: disposeBag)
+        
+        reactor.state.map {
+            $0.commentResult
+        }.filter {
+            $0 != nil
+        }.subscribe(onNext: { result in
+            if let comResult = result,comResult == true {
+                self.commentResult?()
             }
         }).disposed(by: disposeBag)
     
@@ -331,9 +348,17 @@ extension CommentListController: UITableViewDelegate,UITextFieldDelegate {
         
         alert.addAction(UIAlertAction.init(title: "屏蔽/拉黑", style: .default, handler: { [weak self](_) in
             guard let `self` = self else { return }
-            if report_type == .show_comment {
+            if report_type == .rescue_comment {
+                UserManager.shared.setUserShieldContent(shieldId: id, shieldType: .show_sh_comment)
+                self.reactor?.action.onNext(.shieldAction(id, .rescue_sh_comment))
+
+            }else if report_type == .show_comment {
                 UserManager.shared.setUserShieldContent(shieldId: id, shieldType: .show_sh_comment)
                 self.reactor?.action.onNext(.shieldAction(id, .show_sh_comment))
+
+            }else if report_type == .rescue_reply {
+                UserManager.shared.setUserShieldContent(shieldId: id, shieldType: .show_sh_comment)
+                self.reactor?.action.onNext(.shieldAction(id, .rescue_sh_reply))
 
             }else{
                 UserManager.shared.setUserShieldContent(shieldId: id, shieldType: .show_sh_reply)

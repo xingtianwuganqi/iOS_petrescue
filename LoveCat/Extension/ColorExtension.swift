@@ -132,4 +132,14 @@ extension Int {
             return "\(self)"
         }
     }
+    
+    var et_unread: String {
+        if self > 99 {
+            return "99+"
+        }else if self > 0 {
+            return "\(self)"
+        }else{
+            return ""
+        }
+    }
 }

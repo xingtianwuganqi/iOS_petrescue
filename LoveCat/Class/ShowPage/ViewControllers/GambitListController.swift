@@ -25,6 +25,17 @@ class GambitListController: BaseViewController,View {
         return tableview
     }()
     
+    lazy var releaseBtn: UIButton = {
+        let button = UIButton.init(type: .custom)
+        button.setImage(UIImage(named: "icon_home_write"), for: .normal)
+        button.setImage(UIImage(named: "icon_home_write"), for: .highlighted)
+        button.layer.masksToBounds = true
+        button.layer.cornerRadius = 25
+        button.backgroundColor = UIColor.color(.system)
+        button.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
+        return button
+    }()
+    
     fileprivate var dataSource : RxTableViewSectionedReloadDataSource<GambitListSection>!
     
     func dataSourceFactory() ->  RxTableViewSectionedReloadDataSource<GambitListSection> {
@@ -60,8 +71,10 @@ class GambitListController: BaseViewController,View {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.view.backgroundColor = UIColor.color(.defIcon)
         if selectedGambit != nil {
             self.title = "添加话题"
+            self.releaseBtn.isHidden = true
         }
     }
     override func scrollViewInstance() -> UIScrollView? {
@@ -75,9 +88,34 @@ class GambitListController: BaseViewController,View {
             make.left.right.equalToSuperview()
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
         }
+        
+        self.view.addSubview(releaseBtn)
+        releaseBtn.snp.makeConstraints { (make) in
+            make.right.equalToSuperview().offset(-15)
+            make.bottom.equalToSuperview().offset(-(SystemTabBarHeight + 30))
+            make.size.equalTo(CGSize(width: 50, height: 50))
+        }
+        releaseBtn.rx.tap.subscribe(onNext: { [weak self] _ in
+            UserManager.shared.lazyAuthToDoThings {
+                self?.naviService.navigatorSubject.onNext(.createNewGambit)
+            }
+        }).disposed(by: disposeBag)
     }
+    
+    override func hasHeadRefresh() -> Bool {
+        return true
+    }
+    
+    override func hasFooterRefresh() -> Bool {
+        return false
+    }
+    
     override func retryNewData() {
         super.retryNewData()
+        self.reactor?.action.onNext(.loadData(.refresh))
+    }
+    
+    override func refreshNetWorking(page: Paging) {
         self.reactor?.action.onNext(.loadData(.refresh))
     }
 }
@@ -123,7 +161,7 @@ extension GambitListController : UITableViewDelegate{
                 }
                 switch item {
                 case .gambitItem(let model):
-                    self.naviService.navigatorSubject.onNext(.showInfoPage(type: .showInfoList, gambitId: model.id))
+                    self.naviService.navigatorSubject.onNext(.showInfoPage(type: .showInfoList, gambitId: model.id, showId: nil))
                 }
             }
         }).disposed(by: disposeBag)
@@ -133,6 +171,19 @@ extension GambitListController : UITableViewDelegate{
         }.subscribe(onNext: { [weak self] model in
             self?.selectedGambit?(model)
         }).disposed(by: disposeBag)
+        
+        reactor.state.map {
+            $0.endRefreshing
+        }.subscribe(onNext: { [weak self] state in
+            guard let `self` = self else { return }
+            guard let value = state else {
+                return
+            }
+            self.tableview.mj_header?.endRefreshing()
+            self.tableview.mj_footer?.et.setRefState(state: value)
+            
+        }).disposed(by: disposeBag)
+
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {

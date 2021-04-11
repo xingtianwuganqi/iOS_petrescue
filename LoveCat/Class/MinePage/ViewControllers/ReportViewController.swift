@@ -168,7 +168,7 @@ extension ReportViewController {
     func clickPushHandler(_ index: Int) {
     
         if index == 1 {
-            guard let user_id = UserManager.shared.userInfo?.user_id else {
+            guard let user_id = UserManager.shared.userInfo?.id else {
                 return
             }
             guard let violation_id = reactor?.currentState.dataModel.filter({ (model) -> Bool in

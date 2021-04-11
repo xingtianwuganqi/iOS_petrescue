@@ -262,7 +262,9 @@ extension RegisterViewController {
 //                self.navigationController?.dismiss(animated: true, completion: nil)
                 // 跳转到设置
                 self.naviService.navigatorSubject.onNext(.userEdit(fromType: 1))
-                JPUSHService.setAlias("\(userModel.user_id ?? 1)", completion: { (iResCode, alias, seq) in
+                // 发出通知
+                UserManager.shared.loginSuccess.onNext(Void())
+                JPUSHService.setAlias("\(userModel.id ?? 1)", completion: { (iResCode, alias, seq) in
                     
                 }, seq: 0)
 

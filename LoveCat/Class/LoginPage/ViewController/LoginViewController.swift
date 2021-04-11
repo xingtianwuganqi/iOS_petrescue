@@ -248,6 +248,10 @@ class LoginViewController: BaseViewController,View {
         }
     }
     
+    deinit {
+        printLog("login deinit")
+    }
+    
 }
 extension LoginViewController {
     func bind(reactor: LoginViewReactor) {
@@ -295,8 +299,10 @@ extension LoginViewController {
             guard let `self` = self else { return }
             if isLogin,let userModel = self.reactor?.currentState.userInfo {
                 UserManager.shared.upLoadUserInfo(userModel)
-                self.navigationController?.dismiss(animated: true, completion: nil)
-                JPUSHService.setAlias("\(userModel.user_id ?? 1)", completion: { (iResCode, alias, seq) in
+                self.navigationController?.dismiss(animated: true, completion: {
+                    UserManager.shared.loginSuccess.onNext(Void())
+                })
+                JPUSHService.setAlias("\(userModel.id ?? 1)", completion: { (iResCode, alias, seq) in
                     
                 }, seq: 0)
             }

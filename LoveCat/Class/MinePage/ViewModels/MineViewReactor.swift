@@ -89,8 +89,7 @@ final class MineViewReactor: Reactor {
             [
                 MinePageCellModel.init(iconImg: "icon_view_hist", title: "浏览记录"),
                 MinePageCellModel.init(iconImg: "icon_mi_publish", title: "我的发布"),
-                MinePageCellModel.init(iconImg: "icon_mi_collection", title: "我的收藏"),
-                MinePageCellModel.init(iconImg: "icon_mi_msg", title: "我的消息",num: num)
+                MinePageCellModel.init(iconImg: "icon_mi_collection", title: "我的收藏")
             ],
             [
                 MinePageCellModel.init(iconImg: "icon_mi_upload", title: "检测更新"),

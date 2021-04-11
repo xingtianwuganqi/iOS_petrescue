@@ -23,6 +23,7 @@ final class ReleaseTopicReactor: Reactor {
         case updateContact(String?)
         case changeLocation(String?)
         case tagInfos([TagInfoModel])
+        case reloadCacheData(CacheReleaseInfo)
     }
     
     enum Mutation {
@@ -38,6 +39,7 @@ final class ReleaseTopicReactor: Reactor {
         case setErrorMsg(String?)
         case setContact(String?)
         case setTagInfos([TagInfoModel])
+        case setCacheData(CacheReleaseInfo)
     }
     
     struct State {
@@ -108,6 +110,8 @@ final class ReleaseTopicReactor: Reactor {
             return .just(.setContact(contact))
         case .tagInfos(let tags):
             return .just(.setTagInfos(tags))
+        case .reloadCacheData(let data):
+            return .just(.setCacheData(data))
         default:
             return Observable.empty()
         }
@@ -164,6 +168,21 @@ final class ReleaseTopicReactor: Reactor {
             state.releaseResult = releaseResult
         case .setTagInfos(let infos):
             state.tags = infos
+        case .setCacheData(let cacheData):
+            state.tags = cacheData.tagInfos ?? []
+            state.contactInfo = cacheData.contact
+            state.location = cacheData.address
+            let cacheModels = cacheData.photos?.map({ (cacheModel) -> ReleasePhotoModel in
+                var photoModel = ReleasePhotoModel.init()
+                if let imgStr = cacheModel.image ,let image = Tool.shared.loadCacheImage(filePath: imgStr ) {
+                    photoModel.image = image
+                }
+                photoModel.photoKey = cacheModel.photoKey ?? ""
+                photoModel.isAdd = cacheModel.isAdd
+                return photoModel
+            }) ?? []
+            state.photoModels = cacheModels + state.photoModels 
+            
         default:
             break
         }

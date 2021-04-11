@@ -7,7 +7,7 @@
 
 import Foundation
 enum ShowPageApi {
-    case showInfoList(page: Int,gambit_id: Int?)
+    case showInfoList(page: Int,gambit_id: Int?,show_id: Int?=nil)
     case releaseShowInfo(instruction: String,imgs: String,gambitId: Int?)
     case gambitList
     case likeShowInfo(show_id: Int,like_mark: Int)
@@ -17,13 +17,15 @@ enum ShowPageApi {
     /// 我发布的秀宠
     case authPublishShowinfo(page: Int)
     /// 评论列表
-    case commentList(topic_id: Int,page: Int)
+    case commentList(topic_type: Int,topic_id: Int,page: Int)
     /// 发表评论
-    case commentAction(content: String,topic_id: Int,comment_type: Int = 2)
+    case commentAction(content: String,topic_id: Int,comment_type: Int ,to_uid: Int)
     /// 回复
     case replyComment(content: String, comment_id: Int, reply_id: Int,reply_type: Int,to_uid: Int)
     /// 更多回复
     case loadMoreReply(comment_id: Int,page: Int)
+    /// 发起话题
+    case createGambit(content: String,user_id: Int)
 }
 extension ShowPageApi: BaseTargetType {
     
@@ -51,17 +53,20 @@ extension ShowPageApi: BaseTargetType {
             return "/api/v1/commentlist/"
         case .loadMoreReply:
             return "/api/v1/replypageinfo/"
+        case .createGambit:
+            return "/api/v1/creategambitinfo/"
         }
     }
     
     var parameters: [String : Any] {
         var dic: [String: Any] = APPConfig.apiBasicParameters()
         switch self {
-        case .showInfoList(page: let page,gambit_id: let gambit_id):
+        case .showInfoList(page: let page,gambit_id: let gambit_id,show_id: let show_id):
             dic["page"] = page
             dic["size"] = 10
             dic["token"] = UserManager.shared.token
             dic["gambit_id"] = gambit_id
+            dic["show_id"] = show_id
         case .releaseShowInfo(instruction: let instrction, imgs: let imgs, gambitId: let gambit_id):
             dic["token"] = UserManager.shared.token
             dic["instruction"] = instrction
@@ -85,11 +90,13 @@ extension ShowPageApi: BaseTargetType {
             dic["page"] = page
             dic["size"] = 10
             dic["token"] = UserManager.shared.token
-        case .commentAction(content: let content, topic_id: let topic_id, comment_type: let comment_type):
+        case .commentAction(content: let content, topic_id: let topic_id, comment_type: let comment_type,to_uid: let to_uid):
             dic["token"] = UserManager.shared.token
             dic["content"] = content
             dic["topic_id"] = topic_id
             dic["topic_type"] = comment_type
+            dic["from_uid"] = UserManager.shared.userId
+            dic["to_uid"] = to_uid
         case .replyComment(content: let content, comment_id: let comment_id, reply_id: let reply_id, reply_type: let reply_type,to_uid: let to_uid):
             dic["token"] = UserManager.shared.token
             dic["content"] = content
@@ -97,13 +104,21 @@ extension ShowPageApi: BaseTargetType {
             dic["reply_id"] = reply_id
             dic["reply_type"] = reply_type
             dic["to_uid"] = to_uid
-        case .commentList(topic_id: let topic_id,page: let page):
+            dic["from_uid"] = UserManager.shared.userId
+        case .commentList(topic_type: let topic_type,topic_id: let topic_id,page: let page):
+            dic["topic_type"] = topic_type
             dic["topic_id"] = topic_id
             dic["page"] = page
             dic["size"] = 10
         case .loadMoreReply(comment_id: let comment_id, page: let page):
             dic["comment_id"] = comment_id
             dic["page"] = page
+        case .createGambit(content: let descript, user_id: let user_id):
+            dic["descript"] = descript
+            dic["user_id"]  = user_id
+            dic["review_type"] = 1
+            
+            
         }
         return dic
     }

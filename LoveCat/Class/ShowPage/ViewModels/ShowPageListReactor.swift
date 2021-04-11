@@ -19,6 +19,7 @@ final class ShowPageListReactor: Reactor {
         case loadAuthPublish(Paging)
         case loadAuthCollection(Paging)
         case shieldItem(Int)
+        case updateShowInfo(ShowPageModel)
     }
     
     enum Mutation {
@@ -29,6 +30,8 @@ final class ShowPageListReactor: Reactor {
         case setCollectionStatus(Bool,CollectionStatusModel?,ShowPageModel?)
         case setAuthCollectionData([ShowCollectionModel],Paging)
         case setShieldItem(Int)
+        case setUpdateItem(ShowPageModel)
+
     }
     
     struct State {
@@ -41,13 +44,15 @@ final class ShowPageListReactor: Reactor {
         var errorMsg: String?
         var pageType: ShowPageType
         var gambitId: Int? = nil
+        var showId: Int? = nil
     }
     
     var initialState: State = State(pageType: .showInfoList)
     var networking: NetWorking<ShowPageApi> = NetWorking<ShowPageApi>()
-    init(type: ShowPageType,gambit_id: Int? = nil) {
+    init(type: ShowPageType,gambit_id: Int? = nil,show_id: Int?) {
         self.initialState.pageType = type
         self.initialState.gambitId = gambit_id
+        self.initialState.showId = show_id
     }
     
     func mutate(action: Action) -> Observable<Mutation> {
@@ -127,6 +132,9 @@ final class ShowPageListReactor: Reactor {
             return .concat([start,request,end])
         case .shieldItem(let id):
             return .just(Mutation.setShieldItem(id))
+            
+        case .updateShowInfo(let model):
+            return .just(Mutation.setUpdateItem(model))
         }
     }
     func reduce(state: State, mutation: Mutation) -> State {
@@ -249,6 +257,23 @@ final class ShowPageListReactor: Reactor {
             }
             let section = self.updateSection(items: state.dataModels)
             state.section = section
+            
+        case .setUpdateItem(let model):
+            let datamodels = state.dataModels.map { (oriData) -> ShowPageModel in
+                var newData = oriData
+                if newData.show_id == model.show_id {
+                    newData.liked = model.liked
+                    newData.collectioned = model.collectioned
+                    newData.views_num = model.views_num
+                    newData.likes_num = model.likes_num
+                    newData.collection_num = model.collection_num
+                    newData.commNum = model.commNum
+                }
+                return newData
+            }
+            state.dataModels = datamodels
+            let section = self.updateSection(items: state.dataModels)
+            state.section = section
         }
         return state
     }
@@ -285,7 +310,7 @@ extension ShowPageListReactor {
         case .next:
             self.initialState.page += 1
         }
-        return self.networking.request(.showInfoList(page: initialState.page, gambit_id: self.initialState.gambitId)).mapData(ShowPageModel.self)
+        return self.networking.request(.showInfoList(page: initialState.page, gambit_id: self.initialState.gambitId,show_id: self.initialState.showId)).mapData(ShowPageModel.self)
     }
     
     func likeShowInfoNetworking(model: ShowPageModel) -> Observable<BaseModel<LikeStatusModel>?> {

@@ -32,7 +32,9 @@ final class CommentListReactor: Reactor {
     }
     
     struct State {
+        var comment_type: CommentType = .topic_comment
         var topicId: Int = 0
+        var topicUserInfo: UserInfoModel?
         var isLoading: Bool = false
         var netError: Bool = false
         var dataModel: [CommentListModel] = []
@@ -51,8 +53,10 @@ final class CommentListReactor: Reactor {
     
     lazy var netWoking = NetWorking<ShowPageApi>()
     
-    init(topicId: Int) {
+    init(commentType: CommentType,topicId: Int,topicUserInfo: UserInfoModel?) {
+        self.initialState.comment_type = commentType
         self.initialState.topicId = topicId
+        self.initialState.topicUserInfo = topicUserInfo
     }
     
     func mutate(action: Action) -> Observable<Mutation> {
@@ -74,7 +78,7 @@ final class CommentListReactor: Reactor {
             }
             let start = Observable.just(Mutation.setRefreshing(true))
             let end = Observable.just(Mutation.setRefreshing(false))
-            let request = self.networkingCommentList(content: content, topicId: currentState.topicId).map { (baseModel) -> Mutation in
+            let request = self.networkingCommentList(content: content, topicId: currentState.topicId, to_uid: currentState.topicUserInfo?.id ?? 0).map { (baseModel) -> Mutation in
                 if baseModel?.isSuccess ?? false {
                     return Mutation.setCommentStatus(baseModel?.data ?? nil)
                 }else{
@@ -120,6 +124,7 @@ final class CommentListReactor: Reactor {
     
     func reduce(state: State, mutation: Mutation) -> State {
         var state = state
+        state.commentResult = nil
         state.errMsg = nil
         switch mutation {
         case .setLoading(let loading):
@@ -137,15 +142,23 @@ final class CommentListReactor: Reactor {
             }
             
             // 屏蔽
-            let comArr = UserManager.shared.getUserShieldContent(shieldType: .show_sh_comment)
-            let replyArr = UserManager.shared.getUserShieldContent(shieldType: .show_sh_reply)
+            var comArr: [Int] = []
+            var replyArr: [Int] = []
+            if state.comment_type == .topic_comment {
+                comArr = UserManager.shared.getUserShieldContent(shieldType: .rescue_sh_comment)
+                replyArr = UserManager.shared.getUserShieldContent(shieldType: .rescue_sh_reply)
+            }else{
+                comArr = UserManager.shared.getUserShieldContent(shieldType: .show_sh_comment)
+                replyArr = UserManager.shared.getUserShieldContent(shieldType: .show_sh_reply)
+            }
+            
             state.dataModel = state.dataModel.filter({ (model) -> Bool in
                 !comArr.contains(model.comment_id!)
             })
             state.dataModel = state.dataModel.map({ (model) -> CommentListModel in
                 var newModel = model
                 let newReplys = model.replys?.filter({ (replyModel) -> Bool in
-                    !replyArr.contains(replyModel.reply_id!)
+                    !replyArr.contains(replyModel.id!)
                 })
                 newModel.replys = newReplys
                 return newModel
@@ -158,6 +171,7 @@ final class CommentListReactor: Reactor {
                 return state
             }
             state.dataModel.insert(comment, at: 0)
+            state.commentResult = true
             state.section = self.updateSection(models: state.dataModel)
         case .setReplyStatus(let reply):
             guard let replyInfo = reply else {
@@ -171,6 +185,7 @@ final class CommentListReactor: Reactor {
                 return newModel
             }
             state.dataModel = data
+            state.commentResult = true
             state.section = self.updateSection(models: state.dataModel)
 
         case .setComment(comment_id: let comment_id, reply_id: let reply_id,to_uid: let to_uid):
@@ -197,7 +212,7 @@ final class CommentListReactor: Reactor {
             state.section = self.updateSection(models: state.dataModel)
             
         case .setShieldAction(let id, let shield_type):
-            if shield_type == .show_sh_comment {
+            if shield_type == .show_sh_comment || shield_type == .rescue_sh_comment {
                 // 屏蔽
                 state.dataModel = state.dataModel.filter({ (model) -> Bool in
                     model.comment_id != id
@@ -239,11 +254,11 @@ final class CommentListReactor: Reactor {
         case .next:
             self.initialState.page += 1
         }
-        return self.netWoking.request(.commentList(topic_id: topicId, page: self.initialState.page)).mapData(CommentListModel.self)
+        return self.netWoking.request(.commentList(topic_type: currentState.comment_type.rawValue, topic_id: topicId, page: self.initialState.page)).mapData(CommentListModel.self)
     }
     
-    func networkingCommentList(content: String, topicId: Int) -> Observable<BaseModel<CommentListModel>?> {
-        return self.netWoking.request(.commentAction(content: content, topic_id: topicId, comment_type: 2)).mapData(CommentListModel.self)
+    func networkingCommentList(content: String, topicId: Int,to_uid: Int) -> Observable<BaseModel<CommentListModel>?> {
+        return self.netWoking.request(.commentAction(content: content, topic_id: topicId, comment_type: currentState.comment_type.rawValue, to_uid: to_uid)).mapData(CommentListModel.self)
     }
     
     func networkingReplyList(content: String, comment_id: Int, reply_id: Int,reply_type: Int,to_uid: Int) -> Observable<BaseModel<ReplyListModel>?> {

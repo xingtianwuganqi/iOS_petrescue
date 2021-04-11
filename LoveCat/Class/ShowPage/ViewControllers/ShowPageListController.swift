@@ -55,12 +55,18 @@ class ShowPageListController: BaseViewController,View {
                 cell.commentBtnClickBlock = { (model,type) in
                     // 点击了评论
                     if type == 1 {
-                        self.naviService.navigatorSubject.onNext(.ShowCommentList(topicId: model?.show_id ?? 0))
+                        self.naviService.navigatorSubject.onNext(.ShowCommentList(commentType: .show_comment, topicId: model?.show_id ?? 0, topicUInfo: model?.user, commentResult: {
+                            var newModel = model
+                            if let num = newModel?.commNum {
+                                newModel?.commNum = num + 1
+                            }
+                            self.reactor?.action.onNext(.updateShowInfo(newModel!))
+                        }))
                     }else if type == 2{
                         guard let gambitId = model?.gambit_type?.id else {
                             return
                         }
-                        self.naviService.navigatorSubject.onNext(.showInfoPage(type: .showInfoList, gambitId: gambitId))
+                        self.naviService.navigatorSubject.onNext(.showInfoPage(type: .showInfoList, gambitId: gambitId, showId: nil))
                     }else if type == 3 {
                         UserManager.shared.lazyAuthToDoThings {
                             let rect = cell.contentView.convert(cell.moreBtn.frame, to: self.view)
@@ -73,11 +79,11 @@ class ShowPageListController: BaseViewController,View {
         }
     }
     
-    init(navi: NavigatorServiceType,type: ShowPageType,gambitId: Int? = nil) {
+    init(navi: NavigatorServiceType,type: ShowPageType,gambitId: Int? = nil,showId: Int? = nil) {
         super.init(navi: navi)
         dataSource = self.dataSourceFactory()
         defer {
-            self.reactor = ShowPageListReactor.init(type: type,gambit_id: gambitId)
+            self.reactor = ShowPageListReactor.init(type: type,gambit_id: gambitId, show_id: showId)
         }
     }
     
@@ -87,6 +93,7 @@ class ShowPageListController: BaseViewController,View {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.view.backgroundColor = UIColor.color(.defIcon)
         self.navigationItem.title = "秀宠"
     }
 
@@ -215,6 +222,12 @@ extension ShowPageListController : UITableViewDelegate{
                 return
             }
             self.view.xy_show(msg)
+        }).disposed(by: disposeBag)
+        
+        UserManager.shared.loginSuccess.subscribe(onNext: { _ in
+            if self.reactor?.currentState.pageType == .showInfoList {
+                self.reactor?.action.onNext(.loadShowData(.refresh))
+            }
         }).disposed(by: disposeBag)
     }
     

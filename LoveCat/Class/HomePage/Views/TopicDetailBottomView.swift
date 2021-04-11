@@ -15,8 +15,8 @@ class TopicDetailBottomView: UIView {
         return line
     }()
     
-    lazy var bottomView: TopicBottomView = {
-        let btmView = TopicBottomView.init(width: SCREEN_WIDTH)
+    lazy var bottomView: ShowListBottomView = {
+        let btmView = ShowListBottomView.init(width: SCREEN_WIDTH)
         return btmView
     }()
 

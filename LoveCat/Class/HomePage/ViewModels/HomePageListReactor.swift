@@ -249,6 +249,7 @@ extension HomePageListReactor {
                     newData.views_num = model.views_num
                     newData.likes_num = model.likes_num
                     newData.collection_num = model.collection_num
+                    newData.commNum = model.commNum
                 }
                 return newData
             }
