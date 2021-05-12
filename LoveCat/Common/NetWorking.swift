@@ -12,12 +12,10 @@ import HandyJSON
 import Alamofire
 import MBProgressHUD
 
-var baseUrlConfig: baseUrlType = .formal
+var baseUrlConfig: baseUrlType = .test
 
 enum baseUrlType: String {
-    case local = "http://127.0.0.1:8000"
     case test = "https://test.rxswift.cn"
-    case formal = "https://rescue.rxswift.cn"
 }
 
 struct EmptyModel: HandyJSON {
